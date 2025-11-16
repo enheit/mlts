@@ -52,10 +52,29 @@ function M.select_random()
     return
   end
 
+  -- Get current theme to avoid selecting it again
+  local current_theme = persistence.load_selection()
+
+  -- Filter out current theme if there's more than one theme
+  local available_themes = themes
+  if #themes > 1 and current_theme then
+    available_themes = {}
+    for _, theme in ipairs(themes) do
+      if theme.name ~= current_theme then
+        table.insert(available_themes, theme)
+      end
+    end
+  end
+
+  if #available_themes == 0 then
+    vim.notify("Only one theme available", vim.log.levels.INFO)
+    return
+  end
+
   -- Select random theme
   math.randomseed(os.time())
-  local random_index = math.random(1, #themes)
-  local theme = themes[random_index]
+  local random_index = math.random(1, #available_themes)
+  local theme = available_themes[random_index]
 
   -- Apply theme
   preview.apply_preview(theme.path)
