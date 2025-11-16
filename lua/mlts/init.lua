@@ -43,11 +43,40 @@ function M.select()
   menu.open()
 end
 
+-- Select and apply a random theme
+function M.select_random()
+  local themes = scanner.scan_themes()
+
+  if #themes == 0 then
+    vim.notify("No themes found in: " .. scanner.themes_dir, vim.log.levels.WARN)
+    return
+  end
+
+  -- Select random theme
+  math.randomseed(os.time())
+  local random_index = math.random(1, #themes)
+  local theme = themes[random_index]
+
+  -- Apply theme
+  preview.apply_preview(theme.path)
+
+  -- Save selection
+  persistence.save_selection(theme.name)
+
+  vim.notify(string.format("Random theme '%s' applied", theme.name), vim.log.levels.INFO)
+end
+
 -- Create user commands
 vim.api.nvim_create_user_command('MLTSSelect', function()
   M.select()
 end, {
   desc = 'Open MLTS theme selector',
+})
+
+vim.api.nvim_create_user_command('MLTSSelectRandom', function()
+  M.select_random()
+end, {
+  desc = 'Select and apply a random theme',
 })
 
 return M
