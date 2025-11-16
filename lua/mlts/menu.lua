@@ -22,44 +22,36 @@ local function render_menu()
 
   local lines = {}
 
-  -- Title
-  table.insert(lines, "╭─────────────────────────────────────────────────────────╮")
-  table.insert(lines, "│         MLTS - My Lovely Theme Selector                │")
-  table.insert(lines, "╰─────────────────────────────────────────────────────────╯")
-  table.insert(lines, "")
-
-  -- Theme list
+  -- Theme list (just the names)
   if #state.themes == 0 then
-    table.insert(lines, "No themes found in: " .. scanner.themes_dir)
     table.insert(lines, "")
-    table.insert(lines, "Generate themes with MLTB plugin!")
+    table.insert(lines, "  No themes found")
+    table.insert(lines, "")
   else
-    table.insert(lines, "Available Themes (" .. #state.themes .. "):")
-    table.insert(lines, "")
-
     for i, theme in ipairs(state.themes) do
-      local prefix = i == state.selected_index and "▸ " or "  "
-      local marker = i == state.selected_index and " ◀" or ""
-      table.insert(lines, string.format("%s%s%s", prefix, theme.name, marker))
+      table.insert(lines, "  " .. theme.name)
     end
   end
-
-  table.insert(lines, "")
-  table.insert(lines, "────────────────────────────────────────────────────────────")
-  table.insert(lines, "")
-
-  -- Keybindings
-  table.insert(lines, "Keybindings:")
-  table.insert(lines, "  [j] - Move down")
-  table.insert(lines, "  [k] - Move up")
-  table.insert(lines, "  [Enter] - Select theme (save and apply)")
-  table.insert(lines, "  [q] - Close (no changes)")
-  table.insert(lines, "")
 
   -- Set buffer content
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+
+  -- Clear previous highlights
+  vim.api.nvim_buf_clear_namespace(state.buf, -1, 0, -1)
+
+  -- Highlight selected line
+  if #state.themes > 0 then
+    vim.api.nvim_buf_add_highlight(
+      state.buf,
+      -1,
+      'PmenuSel',
+      state.selected_index - 1,
+      0,
+      -1
+    )
+  end
 end
 
 -- Move selection down
@@ -127,12 +119,16 @@ local function setup_keymaps()
   -- Navigation
   vim.keymap.set('n', 'j', move_down, opts)
   vim.keymap.set('n', 'k', move_up, opts)
+  vim.keymap.set('n', '<Down>', move_down, opts)
+  vim.keymap.set('n', '<Up>', move_up, opts)
 
   -- Select
   vim.keymap.set('n', '<CR>', select_theme, opts)
+  vim.keymap.set('n', '<Space>', select_theme, opts)
 
   -- Close
   vim.keymap.set('n', 'q', function() M.close() end, opts)
+  vim.keymap.set('n', '<Esc>', function() M.close() end, opts)
 end
 
 -- Open the menu
@@ -160,8 +156,11 @@ function M.open()
   vim.api.nvim_buf_set_option(state.buf, 'swapfile', false)
   vim.api.nvim_buf_set_option(state.buf, 'filetype', 'mlts')
 
-  -- Create bottom split (15 lines high)
-  vim.cmd('botright 15split')
+  -- Calculate height based on number of themes
+  local height = #state.themes > 0 and math.min(#state.themes + 2, 20) or 5
+
+  -- Create bottom split
+  vim.cmd('botright ' .. height .. 'split')
   state.win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.win, state.buf)
 
@@ -193,8 +192,6 @@ function M.close()
   state.win = nil
   state.themes = {}
   state.selected_index = 1
-
-  vim.notify("MLTS closed", vim.log.levels.INFO)
 end
 
 return M
