@@ -2,6 +2,8 @@
 
 A Neovim plugin for browsing and selecting themes with live preview and persistent selection.
 
+[![asciicast](https://asciinema.org/a/6MQeOrd7BvgkvcC73kKrTRbCG.svg)](https://asciinema.org/a/6MQeOrd7BvgkvcC73kKrTRbCG)
+
 ## Features
 
 - **Interactive theme browser** with bottom split UI
